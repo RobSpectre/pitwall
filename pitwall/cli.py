@@ -111,8 +111,9 @@ async def _chat_async(model: str, verbose: bool, session_id: Optional[str] = Non
         Panel.fit(
             "[bold blue]🏁 Welcome to Pitwall[/bold blue]\n"
             f"[dim]Using model: {model}[/dim]\n\n"
-            "Your AI-powered motorsport data analysis assistant.\n"
-            "Ask me anything about Formula 1, race data, or motorsport statistics!\n\n"
+            "The agentic AI companion for MultiViewer.\n"
+            "Ask me anything about the session you are currently watching with"
+            " MultiViewer!\n\n"
             "[dim]Type 'exit', 'quit', or press Ctrl+C to end the session.[/dim]",
             border_style="blue",
             title="[bold]Pitwall Chat[/bold]",
