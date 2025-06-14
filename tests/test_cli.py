@@ -252,7 +252,7 @@ class TestCLIIntegration:
         result = runner.invoke(app, ["--help"], env={"NO_COLOR": "1"})
 
         assert result.exit_code == 0
-        
+
         # Check for content, accounting for Rich formatting and ANSI codes
         output = result.stdout
         assert "Pitwall" in output or "pitwall" in output
