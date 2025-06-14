@@ -1,20 +1,24 @@
 name: Update Badges
 
 on:
-  push:
-    branches: [ main ]
-  schedule:
-    # Update badges daily at 2 AM UTC
-    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      force-update:
+        description: 'Force badge update'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   update-badges:
     runs-on: ubuntu-latest
+    # Only run manually or when secrets are configured
+    if: ${{ github.event_name == 'workflow_dispatch' || (secrets.COVERAGE_GIST_ID && secrets.TESTS_GIST_ID) }}
     steps:
     - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.10"
 
@@ -24,6 +28,9 @@ jobs:
         pip install -e .[dev]
 
     - name: Generate coverage report
+      env:
+        # Provide a dummy API key for tests that need it
+        OPENROUTER_API_KEY: "test-key-for-badges"
       run: |
         pytest --cov=pitwall --cov-report=json
 
@@ -32,9 +39,11 @@ jobs:
       run: |
         export COVERAGE=$(python -c "import json; print(json.load(open('coverage.json'))['totals']['percent_covered_display'])")
         echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
+        echo "Coverage: $COVERAGE%"
 
     - name: Create coverage badge
-      uses: schneegans/dynamic-badges-action@v1.6.0
+      if: ${{ secrets.COVERAGE_GIST_ID }}
+      uses: schneegans/dynamic-badges-action@v1.7.0
       with:
         auth: ${{ secrets.GITHUB_TOKEN }}
         gistID: ${{ secrets.COVERAGE_GIST_ID }}
@@ -44,7 +53,8 @@ jobs:
         color: ${{ steps.coverage.outputs.percentage > 80 && 'brightgreen' || steps.coverage.outputs.percentage > 60 && 'yellow' || 'red' }}
 
     - name: Create tests badge
-      uses: schneegans/dynamic-badges-action@v1.6.0
+      if: ${{ secrets.TESTS_GIST_ID }}
+      uses: schneegans/dynamic-badges-action@v1.7.0
       with:
         auth: ${{ secrets.GITHUB_TOKEN }}
         gistID: ${{ secrets.TESTS_GIST_ID }}
@@ -52,3 +62,14 @@ jobs:
         label: Tests
         message: Passing
         color: brightgreen
+
+    - name: Log badge status
+      run: |
+        echo "Badge update complete"
+        echo "Coverage: ${{ steps.coverage.outputs.percentage }}%"
+        if [ -z "${{ secrets.COVERAGE_GIST_ID }}" ]; then
+          echo "⚠️ COVERAGE_GIST_ID secret not configured - coverage badge not updated"
+        fi
+        if [ -z "${{ secrets.TESTS_GIST_ID }}" ]; then
+          echo "⚠️ TESTS_GIST_ID secret not configured - tests badge not updated"
+        fi

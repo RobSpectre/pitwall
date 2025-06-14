@@ -7,11 +7,11 @@ Pitwall transforms your motorsport viewing experience by augmenting
 with an agentic intelligence you can interrogate over the course of a racing
 session.
 
-[![CI](https://github.com/yourusername/pitwall/workflows/CI/badge.svg)](https://github.com/yourusername/pitwall/actions)
-[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/yourusername/your-gist-id/raw/pitwall-coverage.json)](https://github.com/yourusername/pitwall)
-[![Tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/yourusername/your-gist-id/raw/pitwall-tests.json)](https://github.com/yourusername/pitwall)
+[![CI](https://github.com/RobSpectre/pitwall/workflows/CI/badge.svg)](https://github.com/RobSpectre/pitwall/actions)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/RobSpectre/pitwall/actions)
+[![Coverage](https://img.shields.io/badge/coverage-66%25-yellow)](https://github.com/RobSpectre/pitwall)
 
 
 ### Key Features
@@ -123,7 +123,7 @@ pitwall memory export abc123 --output session.json
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/pitwall.git
+git clone https://github.com/RobSpectre/pitwall.git
 cd pitwall
 
 # Install in development mode
