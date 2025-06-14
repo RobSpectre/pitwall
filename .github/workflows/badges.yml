@@ -34,7 +34,7 @@ jobs:
         echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
 
     - name: Create coverage badge
-      uses: schneegans/dynamic-badges-action@v1.6.0
+      uses: schneegans/dynamic-badges-action@v1.7.0
       with:
         auth: ${{ secrets.GITHUB_TOKEN }}
         gistID: ${{ secrets.COVERAGE_GIST_ID }}
@@ -44,7 +44,7 @@ jobs:
         color: ${{ steps.coverage.outputs.percentage > 80 && 'brightgreen' || steps.coverage.outputs.percentage > 60 && 'yellow' || 'red' }}
 
     - name: Create tests badge
-      uses: schneegans/dynamic-badges-action@v1.6.0
+      uses: schneegans/dynamic-badges-action@v1.7.0
       with:
         auth: ${{ secrets.GITHUB_TOKEN }}
         gistID: ${{ secrets.TESTS_GIST_ID }}
