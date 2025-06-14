@@ -1,5 +1,5 @@
 """
-Shared test configuration and fixtures for Pitwall - The agentic AI companion to MultiViewer.
+Shared test configuration and fixtures for Pitwall.
 """
 
 import pytest
