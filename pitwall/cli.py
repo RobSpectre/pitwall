@@ -275,7 +275,7 @@ def version():
     console.print(
         Panel.fit(
             "[bold blue]🏁 Pitwall[/bold blue]\n"
-            "[dim]Version: 0.1.0[/dim]\n"
+            "[dim]Version: 0.1.1[/dim]\n"
             "[dim]AI-powered motorsport data analysis[/dim]",
             border_style="blue",
         )
