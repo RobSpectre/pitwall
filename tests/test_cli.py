@@ -152,7 +152,7 @@ class TestCLICommands:
 
         assert result.exit_code == 0
         assert "Pitwall" in result.stdout
-        assert "0.1.0" in result.stdout
+        assert "0.1.1" in result.stdout
 
     @patch("pitwall.cli._check_multiviewer")
     def test_multiviewer_check_failure(self, mock_check):
