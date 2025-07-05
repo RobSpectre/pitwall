@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pitwall"
 version = "0.2.1"
 description = "The agentic AI companion to MultiViewer, the best app to watch motorsports"
-authors = [{name = "Rob Spectre", email = "rob@brooklynhacker"}]
+authors = [{name = "Rob Spectre", email = "rob@brooklynhacker.com"}]
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.10"
