@@ -57,23 +57,50 @@ pip install pitwall
    pitwall
    ```
 
+## Available Commands
+
+### Main Commands
+
+- **`pitwall`** - Start interactive chat mode (default)
+- **`pitwall quick <query>`** - Quick analysis for simple queries
+- **`pitwall models`** - Show available model shortcuts
+- **`pitwall memory`** - Memory management commands
+- **`pitwall --version`** - Show version information
+
+### Memory Commands
+
+- **`pitwall memory list`** - List all conversation sessions
+- **`pitwall memory show <session-id>`** - Show details of a specific session
+- **`pitwall memory export <session-id>`** - Export session to JSON file
+- **`pitwall memory delete <session-id>`** - Delete a specific session
+- **`pitwall memory clear`** - Clear all sessions
+
 ### Example Commands
 
 ```bash
 # Quick analysis of current session
 pitwall quick "What's the current battle for the lead?"
 
-# Start interactive chat mode
-pitwall chat
+# Start interactive chat mode (default command)
+pitwall
 
 # Use a specific AI model
-pitwall chat --model claude-sonnet
+pitwall --model claude-sonnet
 
-# Check 
+# Connect to remote MultiViewer instance
+pitwall --url http://remote-server:10101/graphql
+
+# Check available models
 pitwall models
 
 # Resume a previous session
-pitwall chat --session your-session-id
+pitwall --session your-session-id
+
+# Quick analysis with specific model
+pitwall quick "Who's leading?" --model gpt-41
+
+# Quick analysis with remote MultiViewer
+pitwall quick "Current standings" --url http://remote-server:10101/graphql
 ```
 
 
@@ -84,23 +111,59 @@ pitwall chat --session your-session-id
 ```bash
 # Required: OpenRouter API key for AI models
 export OPENROUTER_API_KEY="your-key-here"
+```
 
-# Optional: Custom MultiViewer host (default: localhost)
-export MULTIVIEWER_HOST="192.168.1.100"
+### CLI Options
+
+```bash
+# Core options available for all commands
+--model, -m     # AI model to use (see Model Options below)
+--verbose, -v   # Enable verbose output
+--session, -s   # Resume a specific conversation session
+--url, -u       # MultiViewer instance URL (default: http://localhost:10101/graphql)
+--version       # Show version information
 ```
 
 ### Model Options
 
 Pitwall supports various AI models through OpenRouter:
 
-- **claude-sonnet**: Anthropic Claude Sonnet (recommended)
-- **claude-opus**: Anthropic Claude Opus (premium)
+- **claude-sonnet**: Anthropic Claude Sonnet 4 (recommended)
+- **claude-opus**: Anthropic Claude Opus 4 (premium)
 - **gpt-41**: OpenAI GPT-4.1
-- **gemini-pro**: Google Gemini Pro
-- **llama**: Meta Llama models
-- **deepseek**: DeepSeek models
+- **gpt-41-mini**: OpenAI GPT-4.1 Mini
+- **gemini-pro**: Google Gemini 2.5 Pro Preview
+- **gemini-flash**: Google Gemini 2.5 Flash Preview
+- **llama**: Meta Llama 4 Maverick
+- **llama-free**: Meta Llama 4 Maverick (free tier)
+- **deepseek**: DeepSeek R1
+
+You can also use any full OpenRouter model name directly.
 
 ## Advanced Features
+
+### Remote MultiViewer Connections
+
+Pitwall connects to MultiViewer instances using the `--url` option (defaults to localhost):
+
+```bash
+# Connect to a remote MultiViewer instance
+pitwall --url http://192.168.1.100:10101/graphql
+
+# Quick analysis with remote instance
+pitwall quick "Current race status" --url http://remote-server:10101/graphql
+
+# Use specific model with remote instance
+pitwall --model claude-opus --url http://remote-server:10101/graphql
+
+# Default behavior (connects to localhost)
+pitwall
+```
+
+This is useful when:
+- Running MultiViewer on a different machine
+- Accessing a shared MultiViewer instance
+- Using Pitwall from a remote location
 
 ### Session Memory
 
@@ -110,11 +173,20 @@ Pitwall remembers your viewing sessions:
 # List previous sessions
 pitwall memory list
 
+# Show details of a specific session
+pitwall memory show abc123
+
 # Resume a specific session
-pitwall chat --session abc123
+pitwall --session abc123
 
 # Export session data
 pitwall memory export abc123 --output session.json
+
+# Delete a session
+pitwall memory delete abc123
+
+# Clear all sessions
+pitwall memory clear
 ```
 
 ## Development
@@ -132,10 +204,16 @@ pip install -e .[dev]
 # Run tests
 pytest
 
-# Run linting
+# Run linting and formatting
 black .
-flake8 pitwall tests
-mypy pitwall
+flake8
+mypy .
+
+# Run tests with coverage
+pytest --cov
+
+# Run tests across multiple Python versions
+tox
 ```
 
 ### Testing
@@ -145,15 +223,25 @@ mypy pitwall
 pytest
 
 # Run with coverage
-pytest --cov=pitwall
+pytest --cov
 
-# Run specific test categories
+# Run specific test files
 pytest tests/test_cli.py
 pytest tests/test_memory.py
 pytest tests/test_pitwall.py
 
+# Run tests with verbose output
+pytest -v
+
 # Run across multiple Python versions
 tox
+
+# Run specific tox environments
+tox -e py310
+tox -e py311
+tox -e py312
+tox -e lint
+tox -e type-check
 ```
 
 ## Architecture

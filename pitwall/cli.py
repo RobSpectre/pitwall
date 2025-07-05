@@ -43,15 +43,23 @@ POPULAR_MODELS = {
 }
 
 
-def _check_multiviewer(host: str = "localhost"):
+def _check_multiviewer(url: str = "http://localhost:10101/graphql"):
     """Check if MultiViewer is running by testing GraphQL endpoint."""
     try:
-        response = requests.get(f"http://{host}:10101/api/graphql", timeout=2)
-        return response.status_code in [
-            200,
-            400,
-            405,
-        ]  # 400 is CSRF protection, 405 is method not allowed
+        # Handle both full URLs and just the base URL
+        check_url = url
+        if url.endswith('/api/graphql'):
+            check_url = url  # Already correct
+        elif url.endswith('/graphql'):
+            check_url = url.replace('/graphql', '/api/graphql')
+        elif url.endswith('/'):
+            check_url = url + 'api/graphql'
+        else:
+            check_url = url + '/api/graphql'
+            
+        response = requests.get(check_url, timeout=2)
+        success = response.status_code in [200, 400, 405]
+        return success
     except requests.exceptions.RequestException:
         return False
 
@@ -69,12 +77,13 @@ def main(
     verbose: bool = typer.Option(
         False, "--verbose", "-v", help="Enable verbose output"
     ),
-    host: str = typer.Option(
-        "localhost", "--host", "-h", help="MultiViewer hostname or IP address"
-    ),
     session: Optional[str] = typer.Option(
         None, "--session", "-s", help="Resume a specific conversation session"
     ),
+    url: str = typer.Option(
+        "http://localhost:10101/graphql", "--url", "-u", help="MultiViewer instance URL"
+    ),
+    version: bool = typer.Option(False, "--version", help="Show version information"),
 ):
     """
     🏁 Pitwall - AI-powered motorsport data analysis
@@ -82,19 +91,32 @@ def main(
     Start an interactive chat session by running 'pitwall' with no arguments.
     Use specific commands for one-off analysis tasks.
     """
-    # Check if MultiViewer is running
-    if not _check_multiviewer(host):
+    # Handle version option
+    if version:
+        console.print()
         console.print(
-            f"[bold red]Error:[/bold red] MultiViewer is not running on {host}"
+            Panel.fit(
+                "[bold blue]🏁 Pitwall[/bold blue]\n"
+                "[dim]Version: 0.2.0[/dim]\n"
+                "[dim]AI-powered motorsport data analysis[/dim]",
+                border_style="blue",
+            )
         )
-        console.print("Please start MultiViewer before using Pitwall")
-        console.print("Download MultiViewer at: https://multiviewer.app")
-        raise typer.Exit(1)
+        raise typer.Exit(0)
 
     if ctx.invoked_subcommand is None:
         # Default behavior: start chat
+        # Check if MultiViewer is running
+        if not _check_multiviewer(url):
+            console.print(
+                f"[bold red]Error:[/bold red] MultiViewer is not running at {url}"
+            )
+            console.print("Please start MultiViewer before using Pitwall")
+            console.print("Download MultiViewer at: https://multiviewer.app")
+            raise typer.Exit(1)
+            
         resolved_model = _resolve_model(model)
-        asyncio.run(_chat_async(resolved_model, verbose, session))
+        asyncio.run(_chat_async(resolved_model, verbose, session, multiviewer_url=url))
 
 
 def _resolve_model(model: str) -> str:
@@ -102,7 +124,12 @@ def _resolve_model(model: str) -> str:
     return POPULAR_MODELS.get(model, model)
 
 
-async def _chat_async(model: str, verbose: bool, session_id: Optional[str] = None):
+async def _chat_async(
+    model: str,
+    verbose: bool,
+    session_id: Optional[str] = None,
+    multiviewer_url: str = "http://localhost:10101/graphql",
+):
     """Interactive chat session with the Pitwall agent."""
 
     # Welcome banner
@@ -142,7 +169,7 @@ async def _chat_async(model: str, verbose: bool, session_id: Optional[str] = Non
                 console.print()
 
         async with create_pitwall_agent(
-            model=model, session_id=session_id, memory=memory
+            model=model, session_id=session_id, memory=memory, multiviewer_url=multiviewer_url
         ) as agent:
             while True:
                 try:
@@ -200,8 +227,8 @@ async def _chat_async(model: str, verbose: bool, session_id: Optional[str] = Non
 def quick(
     query: str = typer.Argument(..., help="Quick analysis query"),
     model: str = typer.Option("claude-sonnet", "--model", "-m", help="Model to use"),
-    host: str = typer.Option(
-        "localhost", "--host", "-h", help="MultiViewer hostname or IP address"
+    url: str = typer.Option(
+        "http://localhost:10101/graphql", "--url", "-u", help="MultiViewer instance URL"
     ),
 ):
     """
@@ -211,23 +238,23 @@ def quick(
         pitwall quick "Who won the last race?"
     """
     # Check if MultiViewer is running
-    if not _check_multiviewer(host):
+    if not _check_multiviewer(url):
         console.print(
-            f"[bold red]Error:[/bold red] MultiViewer is not running on {host}"
+            f"[bold red]Error:[/bold red] MultiViewer is not running at {url}"
         )
         console.print("Please start MultiViewer before using Pitwall")
         console.print("Download MultiViewer at: https://multiviewer.app")
         raise typer.Exit(1)
 
     resolved_model = _resolve_model(model)
-    asyncio.run(_quick_async(query, resolved_model))
+    asyncio.run(_quick_async(query, resolved_model, url))
 
 
-async def _quick_async(query: str, model: str):
+async def _quick_async(query: str, model: str, multiviewer_url: str):
     """Async quick analysis execution."""
     with Live(Spinner("dots", text="Analyzing..."), console=console) as live:
         try:
-            result = await quick_analysis(query, model=model)
+            result = await quick_analysis(query, model=model, multiviewer_url=multiviewer_url)
             live.stop()
 
             console.print()
@@ -265,20 +292,6 @@ def models():
     )
     console.print(
         "\n[dim]You can also use any full OpenRouter model name directly.[/dim]"
-    )
-
-
-@app.command()
-def version():
-    """Show version information."""
-    console.print()
-    console.print(
-        Panel.fit(
-            "[bold blue]🏁 Pitwall[/bold blue]\n"
-            "[dim]Version: 0.1.1[/dim]\n"
-            "[dim]AI-powered motorsport data analysis[/dim]",
-            border_style="blue",
-        )
     )
 
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pitwall"
-version = "0.1.1"
+version = "0.2.0"
 description = "The agentic AI companion to MultiViewer, the best app to watch motorsports"
 authors = [{name = "Your Name", email = "your.email@example.com"}]
 license = "MIT"
@@ -19,7 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "mvf1>=2.0.0",
+    "mvf1>=2.0.1",
     "pydantic-ai-slim[mcp,openai]",
     "typer",
     "rich",
