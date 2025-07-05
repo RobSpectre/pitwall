@@ -48,15 +48,15 @@ def _check_multiviewer(url: str = "http://localhost:10101/graphql"):
     try:
         # Handle both full URLs and just the base URL
         check_url = url
-        if url.endswith('/api/graphql'):
+        if url.endswith("/api/graphql"):
             check_url = url  # Already correct
-        elif url.endswith('/graphql'):
-            check_url = url.replace('/graphql', '/api/graphql')
-        elif url.endswith('/'):
-            check_url = url + 'api/graphql'
+        elif url.endswith("/graphql"):
+            check_url = url.replace("/graphql", "/api/graphql")
+        elif url.endswith("/"):
+            check_url = url + "api/graphql"
         else:
-            check_url = url + '/api/graphql'
-            
+            check_url = url + "/api/graphql"
+
         response = requests.get(check_url, timeout=2)
         success = response.status_code in [200, 400, 405]
         return success
@@ -114,7 +114,7 @@ def main(
             console.print("Please start MultiViewer before using Pitwall")
             console.print("Download MultiViewer at: https://multiviewer.app")
             raise typer.Exit(1)
-            
+
         resolved_model = _resolve_model(model)
         asyncio.run(_chat_async(resolved_model, verbose, session, multiviewer_url=url))
 
@@ -169,7 +169,10 @@ async def _chat_async(
                 console.print()
 
         async with create_pitwall_agent(
-            model=model, session_id=session_id, memory=memory, multiviewer_url=multiviewer_url
+            model=model,
+            session_id=session_id,
+            memory=memory,
+            multiviewer_url=multiviewer_url,
         ) as agent:
             while True:
                 try:
@@ -254,7 +257,9 @@ async def _quick_async(query: str, model: str, multiviewer_url: str):
     """Async quick analysis execution."""
     with Live(Spinner("dots", text="Analyzing..."), console=console) as live:
         try:
-            result = await quick_analysis(query, model=model, multiviewer_url=multiviewer_url)
+            result = await quick_analysis(
+                query, model=model, multiviewer_url=multiviewer_url
+            )
             live.stop()
 
             console.print()

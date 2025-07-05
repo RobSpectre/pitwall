@@ -78,12 +78,12 @@ class TestMultiViewerCheck:
 
     @patch("pitwall.cli.requests.get")
     def test_check_multiviewer_custom_host(self, mock_get):
-        """Test MultiViewer check with custom host."""
+        """Test MultiViewer check with custom URL."""
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_get.return_value = mock_response
 
-        assert _check_multiviewer("192.168.1.100") is True
+        assert _check_multiviewer("http://192.168.1.100:10101/api/graphql") is True
         mock_get.assert_called_once_with(
             "http://192.168.1.100:10101/api/graphql", timeout=2
         )
@@ -128,10 +128,8 @@ class TestCLICommands:
     def setUp(self):
         self.runner = CliRunner()
 
-    @patch("pitwall.cli._check_multiviewer")
-    def test_models_command(self, mock_check):
+    def test_models_command(self):
         """Test the models command."""
-        mock_check.return_value = True
         runner = CliRunner()
 
         result = runner.invoke(app, ["models"])
@@ -142,40 +140,38 @@ class TestCLICommands:
         assert "deepseek" in result.stdout
         assert "anthropic/claude-sonnet-4" in result.stdout
 
-    @patch("pitwall.cli._check_multiviewer")
-    def test_version_command(self, mock_check):
-        """Test the version command."""
-        mock_check.return_value = True
+    def test_version_option(self):
+        """Test the version option."""
         runner = CliRunner()
 
-        result = runner.invoke(app, ["version"])
+        result = runner.invoke(app, ["--version"])
 
         assert result.exit_code == 0
         assert "Pitwall" in result.stdout
-        assert "0.1.1" in result.stdout
+        assert "0.2.0" in result.stdout
 
     @patch("pitwall.cli._check_multiviewer")
     def test_multiviewer_check_failure(self, mock_check):
-        """Test CLI behavior when MultiViewer check fails."""
+        """Test CLI behavior when MultiViewer check fails for default command."""
         mock_check.return_value = False
         runner = CliRunner()
 
-        result = runner.invoke(app, ["models"])
+        result = runner.invoke(app, [])
 
         assert result.exit_code == 1
         assert "MultiViewer is not running" in result.stdout
         assert "https://multiviewer.app" in result.stdout
 
-    @patch("pitwall.cli._check_multiviewer")
-    def test_custom_host_option(self, mock_check):
-        """Test using custom host option."""
-        mock_check.return_value = True
+    def test_custom_url_option(self):
+        """Test using custom URL option with models command."""
         runner = CliRunner()
 
-        result = runner.invoke(app, ["--host", "192.168.1.100", "models"])
+        result = runner.invoke(
+            app, ["--url", "http://192.168.1.100:10101/graphql", "models"]
+        )
 
         assert result.exit_code == 0
-        mock_check.assert_called_with("192.168.1.100")
+        assert "claude-sonnet" in result.stdout
 
     @patch("pitwall.cli._check_multiviewer")
     @patch("pitwall.cli.asyncio.run")
@@ -191,7 +187,7 @@ class TestCLICommands:
         result = runner.invoke(app, ["quick", "test query"])
 
         assert result.exit_code == 0
-        mock_check.assert_called_with("localhost")
+        mock_check.assert_called_with("http://localhost:10101/graphql")
         mock_asyncio_run.assert_called_once()
 
     @patch("pitwall.cli._check_multiviewer")
@@ -216,10 +212,12 @@ class TestCLICommands:
         mock_quick_analysis.return_value = "Analysis result"
         runner = CliRunner()
 
-        result = runner.invoke(app, ["quick", "test query", "--host", "example.com"])
+        result = runner.invoke(
+            app, ["quick", "test query", "--url", "http://example.com:10101/graphql"]
+        )
 
         assert result.exit_code == 0
-        mock_check.assert_called_with("example.com")
+        mock_check.assert_called_with("http://example.com:10101/graphql")
 
     @patch("pitwall.cli._check_multiviewer")
     @patch("pitwall.cli.asyncio.run")
@@ -257,7 +255,7 @@ class TestCLIIntegration:
         output = result.stdout
         assert "Pitwall" in output or "pitwall" in output
         assert "model" in output  # More flexible check
-        assert "host" in output
+        assert "url" in output
         assert "verbose" in output
 
     @patch("pitwall.cli._check_multiviewer")
