@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 from pydantic_ai import Agent
-from pydantic_ai.mcp import MCPServerStdio, MCPServerHTTP
+from pydantic_ai.mcp import MCPServerStdio
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 
