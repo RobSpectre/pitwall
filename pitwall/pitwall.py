@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 from pydantic_ai import Agent
-from pydantic_ai.mcp import MCPServerStdio
+from pydantic_ai.mcp import MCPServerStdio, MCPServerHTTP
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 
@@ -16,14 +16,16 @@ async def create_pitwall_agent(
     model: str = "anthropic/claude-3.7-sonnet",
     session_id: Optional[str] = None,
     memory: Optional[ConversationMemory] = None,
+    multiviewer_url: str = "http://localhost:10101/graphql",
 ):
     """Create and manage a Pitwall agent instance with MCP server."""
-    print("🏁 Starting MVF1 MCP server...")
+    print(f"🏁 Starting local MVF1 MCP server (connecting to {multiviewer_url})...")
 
     try:
-        # Use MCP server as context manager
-        async with MCPServerStdio("mvf1-cli", args=["mcp"], timeout=30) as mcp_server:
-            print("✅ MVF1 MCP server connected successfully!")
+        # Use MCP server as context manager with MultiViewer URL
+        mcp_args = ["mcp", "--url", multiviewer_url]
+        async with MCPServerStdio("mvf1-cli", args=mcp_args, timeout=30) as mcp_server:
+            print("✅ Local MVF1 MCP server started successfully!")
 
             # Create model
             api_key = os.environ.get("OPENROUTER_API_KEY")
@@ -105,7 +107,7 @@ async def create_pitwall_agent(
             yield ConnectedPitwallAgent(agent_instance, mcp_server, memory)
 
     except Exception as e:
-        print(f"⚠️  Could not start MCP server: {e}")
+        print(f"⚠️  Could not start local MCP server: {e}")
         print("🔄 Falling back to basic agent...")
 
         # Initialize memory if needed
@@ -179,9 +181,13 @@ async def create_pitwall_agent(
         yield BasicPitwallAgent(agent_instance, memory)
 
 
-async def quick_analysis(query: str, model: str = "anthropic/claude-3.7-sonnet") -> str:
+async def quick_analysis(
+    query: str,
+    model: str = "anthropic/claude-3.7-sonnet",
+    multiviewer_url: str = "http://localhost:10101/graphql",
+) -> str:
     """Perform a quick analysis without persistent context."""
-    async with create_pitwall_agent(model) as agent:
+    async with create_pitwall_agent(model, multiviewer_url=multiviewer_url) as agent:
         return await agent.execute_task(query, max_turns=1)
 
 
