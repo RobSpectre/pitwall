@@ -15,7 +15,7 @@ jobs:
     # Only run manually or when secrets are configured
     if: ${{ github.event_name == 'workflow_dispatch' || (secrets.COVERAGE_GIST_ID && secrets.TESTS_GIST_ID) }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: Set up Python
       uses: actions/setup-python@v5
