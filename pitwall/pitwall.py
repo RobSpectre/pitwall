@@ -16,7 +16,7 @@ async def create_pitwall_agent(
     model: str = "anthropic/claude-3.7-sonnet",
     session_id: Optional[str] = None,
     memory: Optional[ConversationMemory] = None,
-    multiviewer_url: str = "http://localhost:10101/graphql",
+    multiviewer_url: str = "http://localhost:10101/api/graphql",
 ):
     """Create and manage a Pitwall agent instance with MCP server."""
     print(f"🏁 Starting local MVF1 MCP server (connecting to {multiviewer_url})...")
@@ -184,7 +184,7 @@ async def create_pitwall_agent(
 async def quick_analysis(
     query: str,
     model: str = "anthropic/claude-3.7-sonnet",
-    multiviewer_url: str = "http://localhost:10101/graphql",
+    multiviewer_url: str = "http://localhost:10101/api/graphql",
 ) -> str:
     """Perform a quick analysis without persistent context."""
     async with create_pitwall_agent(model, multiviewer_url=multiviewer_url) as agent:

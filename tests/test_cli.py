@@ -187,7 +187,7 @@ class TestCLICommands:
         result = runner.invoke(app, ["quick", "test query"])
 
         assert result.exit_code == 0
-        mock_check.assert_called_with("http://localhost:10101/graphql")
+        mock_check.assert_called_with("http://localhost:10101/api/graphql")
         mock_asyncio_run.assert_called_once()
 
     @patch("pitwall.cli._check_multiviewer")

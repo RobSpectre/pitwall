@@ -176,6 +176,48 @@ class TestPitwallAgent:
             # Verify OpenAIModel was called with the model and provider
             mock_model.assert_called_with("test-model", provider=mock_provider_instance)
 
+    @pytest.mark.asyncio
+    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"})
+    @patch("pitwall.pitwall.MCPServerStdio")
+    @patch("pitwall.pitwall.OpenAIModel")
+    @patch("pitwall.pitwall.Agent")
+    async def test_multiviewer_url_passthrough(
+        self, mock_agent, mock_model, mock_mcp
+    ):
+        """Test that MultiViewer URL is passed through to MCP server correctly."""
+        mock_mcp_instance = AsyncMock()
+        mock_mcp.return_value.__aenter__ = AsyncMock(return_value=mock_mcp_instance)
+        mock_mcp.return_value.__aexit__ = AsyncMock(return_value=None)
+        mock_model.return_value = MagicMock()
+        mock_agent.return_value = MagicMock()
+
+        # Test with default URL
+        async with create_pitwall_agent("test-model"):
+            # Verify MCPServerStdio was called with correct default URL
+            mock_mcp.assert_called()
+            call_args = mock_mcp.call_args
+            assert call_args[1]["args"] == [
+                "mcp",
+                "--url",
+                "http://localhost:10101/api/graphql",
+            ]
+
+        # Reset mock
+        mock_mcp.reset_mock()
+        mock_mcp.return_value.__aenter__ = AsyncMock(return_value=mock_mcp_instance)
+        mock_mcp.return_value.__aexit__ = AsyncMock(return_value=None)
+
+        # Test with custom URL
+        async with create_pitwall_agent(
+            "test-model", multiviewer_url="http://custom:8080/api/graphql"
+        ):
+            call_args = mock_mcp.call_args
+            assert call_args[1]["args"] == [
+                "mcp",
+                "--url",
+                "http://custom:8080/api/graphql",
+            ]
+
 
 class TestPitwallAgentMethods:
     """Test specific agent wrapper methods."""

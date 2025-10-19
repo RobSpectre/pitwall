@@ -43,21 +43,10 @@ POPULAR_MODELS = {
 }
 
 
-def _check_multiviewer(url: str = "http://localhost:10101/graphql"):
+def _check_multiviewer(url: str = "http://localhost:10101/api/graphql"):
     """Check if MultiViewer is running by testing GraphQL endpoint."""
     try:
-        # Handle both full URLs and just the base URL
-        check_url = url
-        if url.endswith("/api/graphql"):
-            check_url = url  # Already correct
-        elif url.endswith("/graphql"):
-            check_url = url.replace("/graphql", "/api/graphql")
-        elif url.endswith("/"):
-            check_url = url + "api/graphql"
-        else:
-            check_url = url + "/api/graphql"
-
-        response = requests.get(check_url, timeout=2)
+        response = requests.get(url, timeout=2)
         success = response.status_code in [200, 400, 405]
         return success
     except requests.exceptions.RequestException:
@@ -81,7 +70,7 @@ def main(
         None, "--session", "-s", help="Resume a specific conversation session"
     ),
     url: str = typer.Option(
-        "http://localhost:10101/graphql", "--url", "-u", help="MultiViewer instance URL"
+        "http://localhost:10101/api/graphql", "--url", "-u", help="MultiViewer instance URL"
     ),
     version: bool = typer.Option(False, "--version", help="Show version information"),
 ):
@@ -128,7 +117,7 @@ async def _chat_async(
     model: str,
     verbose: bool,
     session_id: Optional[str] = None,
-    multiviewer_url: str = "http://localhost:10101/graphql",
+    multiviewer_url: str = "http://localhost:10101/api/graphql",
 ):
     """Interactive chat session with the Pitwall agent."""
 
@@ -231,7 +220,7 @@ def quick(
     query: str = typer.Argument(..., help="Quick analysis query"),
     model: str = typer.Option("claude-sonnet", "--model", "-m", help="Model to use"),
     url: str = typer.Option(
-        "http://localhost:10101/graphql", "--url", "-u", help="MultiViewer instance URL"
+        "http://localhost:10101/api/graphql", "--url", "-u", help="MultiViewer instance URL"
     ),
 ):
     """
