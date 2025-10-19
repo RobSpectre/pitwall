@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pitwall"
-version = "0.2.1"
+version = "0.2.2"
 description = "The agentic AI companion to MultiViewer, the best app to watch motorsports"
 authors = [{name = "Rob Spectre", email = "rob@brooklynhacker.com"}]
 license = "MIT"

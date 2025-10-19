@@ -4,13 +4,17 @@ using PydanticAI's built-in message history.
 """
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Any
 from uuid import uuid4
 
+from pydantic import ValidationError
 from pydantic_core import to_jsonable_python
 from pydantic_ai.messages import ModelMessagesTypeAdapter, ModelMessage
+
+logger = logging.getLogger(__name__)
 
 
 class ConversationMemory:
@@ -68,6 +72,7 @@ class ConversationMemory:
         metadata_file = self._get_session_metadata_file(session_id)
 
         if not session_file.exists() or not metadata_file.exists():
+            logger.debug(f"Session files not found for session_id: {session_id}")
             return False
 
         try:
@@ -85,7 +90,24 @@ class ConversationMemory:
             self.current_session_id = session_id
             return True
 
-        except (json.JSONDecodeError, Exception):
+        except json.JSONDecodeError as e:
+            logger.error(
+                f"Failed to parse session file {session_file}: {e}. "
+                "The session file may be corrupted."
+            )
+            return False
+        except ValidationError as e:
+            logger.error(
+                f"Failed to validate messages in session {session_id}: {e}. "
+                "This may occur if MultiViewer was closed or returned malformed data "
+                "during a previous session. Common issues include invalid datetime "
+                "formats. Consider deleting this session with 'pitwall delete-session'."
+            )
+            return False
+        except Exception as e:
+            logger.error(
+                f"Unexpected error loading session {session_id}: {e}", exc_info=True
+            )
             return False
 
     def _save_messages(self):
@@ -122,8 +144,16 @@ class ConversationMemory:
                 with open(metadata_file, "w", encoding="utf-8") as f:
                     json.dump(metadata, f, indent=2, ensure_ascii=False)
 
-            except (json.JSONDecodeError, Exception):
-                pass
+            except json.JSONDecodeError as e:
+                logger.warning(
+                    f"Could not update metadata for session {self.current_session_id}: "
+                    f"Failed to parse metadata file: {e}"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Could not update metadata for session "
+                    f"{self.current_session_id}: {e}"
+                )
 
     def update_from_run_result(self, run_result):
         """Update memory with messages from a PydanticAI run result."""
@@ -162,7 +192,13 @@ class ConversationMemory:
                 "message_count": len(self.current_messages),
                 **metadata,
             }
-        except (json.JSONDecodeError, Exception):
+        except json.JSONDecodeError as e:
+            logger.warning(
+                f"Could not read session summary: Failed to parse metadata file: {e}"
+            )
+            return None
+        except Exception as e:
+            logger.warning(f"Could not read session summary: {e}")
             return None
 
     def list_sessions(self) -> List[Dict[str, Any]]:
@@ -176,7 +212,11 @@ class ConversationMemory:
 
                 sessions.append(metadata)
 
-            except (json.JSONDecodeError, Exception):
+            except json.JSONDecodeError:
+                logger.debug(f"Skipping corrupted metadata file: {metadata_file}")
+                continue
+            except Exception as e:
+                logger.debug(f"Could not read metadata file {metadata_file}: {e}")
                 continue
 
         # Sort by updated_at descending
@@ -216,6 +256,7 @@ class ConversationMemory:
         metadata_file = self._get_session_metadata_file(session_id)
 
         if not session_file.exists() or not metadata_file.exists():
+            logger.debug(f"Cannot export session {session_id}: session files not found")
             return False
 
         try:
@@ -234,7 +275,17 @@ class ConversationMemory:
 
             return True
 
-        except Exception:
+        except json.JSONDecodeError as e:
+            logger.error(
+                f"Failed to export session {session_id}: "
+                f"Failed to parse session files: {e}"
+            )
+            return False
+        except IOError as e:
+            logger.error(f"Failed to export session {session_id}: File I/O error: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to export session {session_id}: {e}", exc_info=True)
             return False
 
     def has_active_session(self) -> bool:
